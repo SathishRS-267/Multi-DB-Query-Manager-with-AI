@@ -1,0 +1,78 @@
+from passlib.context import CryptContext
+from datetime import datetime, timedelta
+from jose import jwt
+from config import settings
+from typing import Optional
+import secrets
+import smtplib
+from email.message import EmailMessage
+
+
+# Password hashing
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+
+def verify_password(plain_password, hashed_password):
+    return pwd_context.verify(plain_password, hashed_password)
+
+
+def get_password_hash(password):
+    return pwd_context.hash(password)
+
+
+# JWT token operations
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
+    to_encode = data.copy()
+    
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+    
+    return encoded_jwt
+
+
+# Password reset token
+def generate_reset_token():
+    return secrets.token_urlsafe(32)
+
+
+# Email sending
+async def send_reset_email(email: str, token: str):
+    reset_link = f"{settings.FRONTEND_URL}/reset-password?token={token}"
+    
+    # Create message
+    message = EmailMessage()
+    message["Subject"] = "Password Reset Request"
+    message["From"] = settings.EMAIL_FROM
+    message["To"] = email
+    
+    # Email content
+    content = f"""
+    Hello,
+    
+    You have requested to reset your password. Please click the link below to reset your password:
+    
+    {reset_link}
+    
+    This link is valid for 1 hour. If you did not request a password reset, please ignore this email.
+    
+    Best regards,
+    Your App Team
+    """
+    
+    message.set_content(content)
+    
+    # Send email
+    try:
+        with smtplib.SMTP(settings.EMAIL_HOST, settings.EMAIL_PORT) as server:
+            server.starttls()
+            server.login(settings.EMAIL_USERNAME, settings.EMAIL_PASSWORD)
+            server.send_message(message)
+            return True
+    except Exception as e:
+        print(f"Failed to send email: {e}")
+        return False

@@ -1,0 +1,14 @@
+{
+  "connections": [
+    {
+      "id": "example",
+      "name": "Example Database",
+      "type": "postgresql",
+      "host": "localhost",
+      "port": 5432,
+      "database": "mydb",
+      "username": "user",
+      "password": "password"
+    }
+  ]
+}
