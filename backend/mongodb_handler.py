@@ -28,11 +28,11 @@ def get_last_mongo_connection():
     
     try:
         conn = psycopg2.connect(
-            host="localhost",
-            port=5432,
-            database="sqleditor",
-            user="postgres",
-            password="pwd"
+            host=os.getenv("MGMT_DB_HOST", "localhost"),
+            port=int(os.getenv("MGMT_DB_PORT", "5432")),
+            database=os.getenv("MGMT_DB_NAME", "sqleditor"),
+            user=os.getenv("MGMT_DB_USER", "postgres"),
+            password=os.getenv("MGMT_DB_PASSWORD")
         )
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cur.execute("""

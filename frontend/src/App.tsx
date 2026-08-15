@@ -9,7 +9,6 @@ import AIChat from './pages/AIChat';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { ThemeProvider } from './contexts/ThemeContext';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuth();
@@ -20,7 +19,6 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 function App() {
   return (
     <AuthProvider>
-     <ThemeProvider>
       <BrowserRouter>
         <Toaster position="top-right" />
         <Routes>
@@ -41,7 +39,6 @@ function App() {
           </Route>
         </Routes>
       </BrowserRouter>
-      </ThemeProvider>
     </AuthProvider>
   );
 }

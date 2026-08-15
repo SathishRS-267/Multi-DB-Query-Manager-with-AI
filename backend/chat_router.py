@@ -44,7 +44,13 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 # Initialize database for chat history
-SQLALCHEMY_DATABASE_URL = "postgresql://postgres:pwd@localhost/sqleditor"
+MGMT_DB_HOST = os.getenv("MGMT_DB_HOST", "localhost")
+MGMT_DB_PORT = os.getenv("MGMT_DB_PORT", "5432")
+MGMT_DB_NAME = os.getenv("MGMT_DB_NAME", "sqleditor")
+MGMT_DB_USER = os.getenv("MGMT_DB_USER", "postgres")
+MGMT_DB_PASSWORD = os.getenv("MGMT_DB_PASSWORD", "pwd")
+
+SQLALCHEMY_DATABASE_URL = f"postgresql://{MGMT_DB_USER}:{MGMT_DB_PASSWORD}@{MGMT_DB_HOST}:{MGMT_DB_PORT}/{MGMT_DB_NAME}"
 try:
     engine = create_engine(SQLALCHEMY_DATABASE_URL, pool_pre_ping=True)
     SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -133,15 +139,14 @@ class ConnectionManager:
 
 manager = ConnectionManager()
 
-# Function to get the last used database connection from the management database
 def get_last_connection():
     try:
         conn = psycopg2.connect(
-            host="localhost",  # Management DB
-            port=5432,
-            database="sqleditor",
-            user="postgres",
-            password="pwd"
+            host=MGMT_DB_HOST,
+            port=int(MGMT_DB_PORT),
+            database=MGMT_DB_NAME,
+            user=MGMT_DB_USER,
+            password=MGMT_DB_PASSWORD
         )
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cur.execute("""
@@ -820,175 +825,6 @@ Return only the query without any explanation. Be precise with table and column 
         "content": response.choices[0].message.content,
         "timestamp": datetime.now().isoformat()
     }
-
-# @router.websocket("/ws/chat")
-# async def websocket_endpoint(websocket: WebSocket):
-#     client_id = str(uuid.uuid4())
-#     logger.info(f"WebSocket connection attempt from client {client_id}")
-    
-#     try:
-#         # Accept the connection
-#         await websocket.accept()
-#         logger.info(f"WebSocket connection accepted for client {client_id}")
-        
-#         # Add to connection manager
-#         await manager.connect(websocket, client_id)
-        
-#         # Attempt to connect to the last used database
-#         connect_message = await connect_to_last_database(client_id)
-        
-#         # Send initial welcome message
-#         welcome_message = "Connected to the database chat assistant. "
-#         if "Connected to" in connect_message:
-#             welcome_message += f"{connect_message}. How can I help you today?"
-#         else:
-#             welcome_message += "How can I help you today? (Note: You are not currently connected to a database)"
-            
-#         await websocket.send_text(json.dumps({
-#             "type": "bot",
-#             "content": welcome_message,
-#             "timestamp": datetime.now().isoformat()
-#         }))
-        
-#         # Keep the connection open and listen for messages
-#         while True:
-#             try:
-#                 # Wait for a message from the client
-#                 data = await websocket.receive_text()
-#                 logger.info(f"Received message from client {client_id}")
-                
-#                 # Parse the message
-#                 message = json.loads(data)
-                
-#                 # Process the message
-#                 response = await process_user_message(client_id, message)
-                
-#                 # Send the response
-#                 await websocket.send_text(json.dumps(response))
-                
-#             except WebSocketDisconnect:
-#                 logger.info(f"Client {client_id} disconnected")
-#                 break
-#             except Exception as e:
-#                 logger.error(f"Error processing message: {e}")
-#                 # Send error message to client
-#                 await websocket.send_text(json.dumps({
-#                     "type": "bot",
-#                     "content": f"An error occurred: {str(e)}",
-#                     "timestamp": datetime.now().isoformat()
-#                 }))
-    
-#     except WebSocketDisconnect:
-#         logger.info(f"Client {client_id} disconnected during handshake")
-#     except Exception as e:
-#         logger.error(f"Error in WebSocket connection: {e}")
-    
-#     finally:
-#         # Clean up resources and disconnect from connection manager
-#         manager.disconnect(client_id)
-        
-#         # Close database connection if exists
-#         if client_id in db_connections:
-#             try:
-#                 # Close database connection based on type
-#                 if connection_details[client_id]['dbms'].lower() in ['postgresql', 'mysql', 'sqlserver', 'redshift']:
-#                     db_connections[client_id].dispose()
-#                 elif connection_details[client_id]['dbms'].lower() == 'mongodb':
-#                     db_connections[client_id].close()
-                
-#                 del db_connections[client_id]
-#                 del connection_details[client_id]
-#                 logger.info(f"Database connection for client {client_id} closed")
-#             except Exception as e:
-#                 logger.error(f"Error closing database connection: {e}")
-
-# @router.websocket("/ws/chat")
-# async def websocket_endpoint(websocket: WebSocket):
-#     client_id = str(uuid.uuid4())
-#     logger.info(f"WebSocket connection attempt from client {client_id}")
-    
-#     try:
-#         # Accept the connection
-#         await websocket.accept()
-#         logger.info(f"WebSocket connection accepted for client {client_id}")
-        
-#         # Add to connection manager
-#         await manager.connect(websocket, client_id)
-        
-#         # Create a database session
-#         db = SessionLocal()
-        
-#         try:
-#             # Attempt to connect to the last used database
-#             connect_message = await connect_to_last_database(client_id)
-            
-#             # Send initial welcome message
-#             welcome_message = "Connected to the database chat assistant. "
-#             if "Connected to" in connect_message:
-#                 welcome_message += f"{connect_message}. How can I help you today?"
-#             else:
-#                 welcome_message += "How can I help you today? (Note: You are not currently connected to a database)"
-                
-#             await websocket.send_text(json.dumps({
-#                 "type": "bot",
-#                 "content": welcome_message,
-#                 "timestamp": datetime.now().isoformat()
-#             }))
-            
-#             # Keep the connection open and listen for messages
-#             while True:
-#                 try:
-#                     # Wait for a message from the client
-#                     data = await websocket.receive_text()
-#                     logger.info(f"Received message from client {client_id}")
-                    
-#                     # Parse the message
-#                     message = json.loads(data)
-                    
-#                     # Process the message with db session
-#                     response = await process_user_message(client_id, message, db)
-                    
-#                     # Send the response
-#                     await websocket.send_text(json.dumps(response))
-                    
-#                 except WebSocketDisconnect:
-#                     logger.info(f"Client {client_id} disconnected")
-#                     break
-#                 except Exception as e:
-#                     logger.error(f"Error processing message: {e}")
-#                     # Send error message to client
-#                     await websocket.send_text(json.dumps({
-#                         "type": "bot",
-#                         "content": f"An error occurred: {str(e)}",
-#                         "timestamp": datetime.now().isoformat()
-#                     }))
-#         finally:
-#             # Make sure to close the database session
-#             db.close()
-    
-#     except WebSocketDisconnect:
-#         logger.info(f"Client {client_id} disconnected during handshake")
-#     except Exception as e:
-#         logger.error(f"Error in WebSocket connection: {e}")
-    
-#     finally:
-#         # Clean up resources and disconnect from connection manager
-#         manager.disconnect(client_id)
-        
-#         # Close database connection if exists
-#         if client_id in db_connections:
-#             try:
-#                 # Close database connection based on type
-#                 if connection_details[client_id]['dbms'].lower() in ['postgresql', 'mysql', 'sqlserver', 'redshift']:
-#                     db_connections[client_id].dispose()
-#                 elif connection_details[client_id]['dbms'].lower() == 'mongodb':
-#                     db_connections[client_id].close()
-                
-#                 del db_connections[client_id]
-#                 del connection_details[client_id]
-#                 logger.info(f"Database connection for client {client_id} closed")
-#             except Exception as e:
-#                 logger.error(f"Error closing database connection: {e}")
 
 @router.websocket("/ws/chat")
 async def websocket_endpoint(websocket: WebSocket):
