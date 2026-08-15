@@ -3,14 +3,14 @@ import { UserIcon, Mail } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 
 const Profile: React.FC = () => {
-  const { user } = useAuth();
+  const { user }: any = useAuth();
   const [username, setUsername] = useState<string>("");
   const [email, setEmail] = useState<string>("");
 
   // Load user data when component mounts
   useEffect(() => {
     if (user) {
-      setUsername(user.name || "");
+      setUsername(user.username || "");
       setEmail(user.email || "");
     }
   }, [user]);

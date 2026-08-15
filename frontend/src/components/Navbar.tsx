@@ -4,7 +4,7 @@ import { Database, Settings, User } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 const Navbar = () => {
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = async () => {

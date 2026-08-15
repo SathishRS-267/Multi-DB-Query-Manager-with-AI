@@ -21,9 +21,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Check for OpenAI API key
-if not os.getenv("OPENAI_API_KEY"):
-    logger.warning("OPENAI_API_KEY environment variable not set. The application may not function correctly.")
+# Check for NVIDIA API key
+if not os.getenv("NVIDIA_API_KEY"):
+    logger.warning("NVIDIA_API_KEY environment variable not set. AI features may not function correctly. Get free key at: https://build.nvidia.com/")
 
 # Lifespan context manager for startup/shutdown events
 @asynccontextmanager

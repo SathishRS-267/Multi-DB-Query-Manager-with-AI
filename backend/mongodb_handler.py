@@ -7,16 +7,15 @@ import ast
 import bson
 from bson.objectid import ObjectId
 from bson.json_util import dumps, loads
-import openai
+from ai_client import get_ai_client
 import os
 from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
 
-# Initialize OpenAI client
-openai_api_key = os.getenv("OPENAI_API_KEY")
-client = openai.OpenAI(api_key=openai_api_key)
+# Initialize AI client
+ai_client = get_ai_client()
 
 mongo_router = APIRouter(prefix="/mongo", tags=["mongodb"])
 
@@ -189,9 +188,8 @@ async def validate_mongo_query(data: MongoExecuteRequest):
     """
     
     try:
-        # Call OpenAI API
-        response = client.chat.completions.create(
-            model="gpt-4-turbo",
+        # Call AI API
+        response = ai_client.chat_completion(
             messages=[
                 {"role": "system", "content": "You are an expert MongoDB database analyst that provides clear, concise insights about MongoDB queries."},
                 {"role": "user", "content": prompt}
@@ -199,7 +197,7 @@ async def validate_mongo_query(data: MongoExecuteRequest):
         )
         
         # Extract the analysis from the response
-        analysis = response.choices[0].message.content
+        analysis = response
         
         # Return the analysis as a description
         return {

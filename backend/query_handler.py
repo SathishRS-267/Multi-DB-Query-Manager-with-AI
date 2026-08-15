@@ -7,7 +7,7 @@ import psycopg2
 import psycopg2.extras
 import pymysql
 import pymongo
-import openai
+from ai_client import get_ai_client
 import os
 from dotenv import load_dotenv
 import smtplib
@@ -20,9 +20,8 @@ import json
 # Load environment variables from .env file
 load_dotenv()
 
-# Initialize OpenAI client
-openai_api_key = os.getenv("OPENAI_API_KEY")
-client = openai.OpenAI(api_key=openai_api_key)
+# Initialize AI client
+ai_client = get_ai_client()
 
 router = APIRouter()
 
@@ -296,9 +295,8 @@ async def autocomplete_query(data: AutoCompleteRequest):
         Only return valid JSON, no additional text.
         """
         
-        # Call OpenAI API
-        response = client.chat.completions.create(
-            model="gpt-4-turbo",
+        # Call AI API
+        response = ai_client.chat_completion(
             messages=[
                 {"role": "system", "content": 
                  "You are an AI SQL assistant that provides helpful auto-completion suggestions based on partial SQL queries. "
@@ -311,7 +309,7 @@ async def autocomplete_query(data: AutoCompleteRequest):
         )
         
         # Parse the JSON response
-        completion_data = json.loads(response.choices[0].message.content)
+        completion_data = json.loads(response)
         
         # Return the auto-completion suggestions
         return completion_data
@@ -510,9 +508,8 @@ async def validate_mongo_command(data: MongoCommandRequest):
         Format your response in markdown with clear sections.
         """
         
-        # Call OpenAI API
-        response = client.chat.completions.create(
-            model="gpt-4-turbo",
+        # Call AI API
+        response = ai_client.chat_completion(
             messages=[
                 {"role": "system", "content": "You are an expert MongoDB database analyst that provides clear, concise insights about MongoDB commands."},
                 {"role": "user", "content": prompt}
@@ -520,7 +517,7 @@ async def validate_mongo_command(data: MongoCommandRequest):
         )
         
         # Extract the analysis from the response
-        analysis = response.choices[0].message.content
+        analysis = response
         
         # Return the analysis as a description
         return {
@@ -621,9 +618,8 @@ async def validate_query(data: QueryRequest):
     """
     
     try:
-        # Call OpenAI API
-        response = client.chat.completions.create(
-            model="gpt-4-turbo",  # Use appropriate model based on your OpenAI access
+        # Call AI API
+        response = ai_client.chat_completion(
             messages=[
                 {"role": "system", "content": "You are an expert SQL database analyst that provides clear, concise insights about SQL queries."},
                 {"role": "user", "content": prompt}
@@ -631,7 +627,7 @@ async def validate_query(data: QueryRequest):
         )
         
         # Extract the analysis from the response
-        analysis = response.choices[0].message.content
+        analysis = response
         
         # Return the analysis as a description
         return {
@@ -665,11 +661,11 @@ def save_query(data: SaveQuery):
     try:
         # Connect to the management database
         conn = psycopg2.connect(
-            host="localhost",  # Management DB
-            port=5432,
-            database="sqleditor",
-            user="postgres",
-            password="pwd"
+            host=os.getenv("MGMT_DB_HOST", "localhost"),
+            port=int(os.getenv("MGMT_DB_PORT", "5432")),
+            database=os.getenv("MGMT_DB_NAME", "sqleditor"),
+            user=os.getenv("MGMT_DB_USER", "postgres"),
+            password=os.getenv("MGMT_DB_PASSWORD")
         )
         
         cur = conn.cursor()
@@ -720,14 +716,30 @@ def get_saved_queries():
             
         # Connect to the management database
         conn = psycopg2.connect(
-            host="localhost",  # Management DB
-            port=5432,
-            database="sqleditor",
-            user="postgres",
-            password="pwd"
+            host=os.getenv("MGMT_DB_HOST", "localhost"),
+            port=int(os.getenv("MGMT_DB_PORT", "5432")),
+            database=os.getenv("MGMT_DB_NAME", "sqleditor"),
+            user=os.getenv("MGMT_DB_USER", "postgres"),
+            password=os.getenv("MGMT_DB_PASSWORD")
         )
         
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        
+        # Create the saved_queries table if it doesn't exist
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS saved_queries (
+                id SERIAL PRIMARY KEY,
+                name TEXT NOT NULL,
+                description TEXT,
+                query TEXT NOT NULL,
+                connection_id UUID NOT NULL,
+                db_type TEXT NOT NULL,
+                type TEXT NOT NULL DEFAULT 'sql',
+                database TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        conn.commit()
         
         # Get saved queries for the current connection type
         # Include type and database fields
@@ -792,11 +804,11 @@ def delete_query(query_id: int):
     try:
         # Connect to the management database
         conn = psycopg2.connect(
-            host="localhost",  # Management DB
-            port=5432,
-            database="sqleditor",
-            user="postgres",
-            password="pwd"
+            host=os.getenv("MGMT_DB_HOST", "localhost"),
+            port=int(os.getenv("MGMT_DB_PORT", "5432")),
+            database=os.getenv("MGMT_DB_NAME", "sqleditor"),
+            user=os.getenv("MGMT_DB_USER", "postgres"),
+            password=os.getenv("MGMT_DB_PASSWORD")
         )
         
         cur = conn.cursor()

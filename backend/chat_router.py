@@ -6,7 +6,7 @@ from pydantic import BaseModel, EmailStr
 import json
 import uuid
 import asyncio
-import openai
+from ai_client import get_ai_client
 import os
 from typing import Dict, List, Any, Optional
 import logging
@@ -27,14 +27,13 @@ from email.mime.text import MIMEText
 
 load_dotenv()  # load environment variables from .env
 
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+# Initialize AI client
+ai_client = get_ai_client()
+
 SMTP_SERVER = os.getenv("SMTP_SERVER", "smtp.gmail.com")
 SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
 SMTP_USERNAME = os.getenv("SMTP_USERNAME", "sqlwizard123@gmail.com")
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "eavt frhm iqxg pvnw")
-
-# Initialize OpenAI client
-openai_client = openai.OpenAI(api_key=OPENAI_API_KEY)
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -464,16 +463,15 @@ async def execute_database_query(client_id: str, query: str) -> str:
             database = connection_details[client_id]['database']
             db = connection[database]
             
-            # Use GPT to interpret the query
-            response = openai_client.chat.completions.create(
-                model="gpt-4-turbo",
+            # Use AI to interpret the query
+            response = ai_client.chat_completion(
                 messages=[
                     {"role": "system", "content": "Convert the following natural language MongoDB query to a Python code that uses PyMongo. Return only the code without any explanation."},
                     {"role": "user", "content": f"Query: {query}\nConvert this to PyMongo code that should give me the result object."}
                 ]
             )
             
-            mongo_code = response.choices[0].message.content.strip()
+            mongo_code = response.strip()
             
             # Extract the code block if present
             if "```python" in mongo_code:
@@ -738,8 +736,7 @@ Tables: {', '.join(schema_info.get('tables', []))}
     
     system_prompt += "\nDetermine if the user's message is a database query request. If it is, identify the SQL or database operation needed. Respond with JSON including 'is_query' (boolean) and 'explanation' (string)."
     
-    response = openai_client.chat.completions.create(
-        model="gpt-4-turbo",
+    response = ai_client.chat_completion(
         messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": content}
@@ -747,13 +744,12 @@ Tables: {', '.join(schema_info.get('tables', []))}
         response_format={"type": "json_object"}
     )
     
-    analysis = json.loads(response.choices[0].message.content)
+    analysis = json.loads(response)
     
     # If this appears to be a query request
     if analysis.get('is_query', False):
         # Generate the database query using schema info
-        response = openai_client.chat.completions.create(
-            model="gpt-4-turbo",
+        response = ai_client.chat_completion(
             messages=[
                 {"role": "system", "content": f"""You are a database expert. Convert the following request into a valid {connection_details[client_id]['dbms']} query.
                 
@@ -770,7 +766,7 @@ Return only the query without any explanation. Be precise with table and column 
             ]
         )
         
-        query = response.choices[0].message.content.strip()
+        query = response.strip()
         
         # Extract the query if it's in a code block
         if "```" in query:
@@ -812,8 +808,7 @@ Return only the query without any explanation. Be precise with table and column 
     else:
         system_message += "The user is not currently connected to any database. I'll try to connect to their last used database first."
     
-    response = openai_client.chat.completions.create(
-        model="gpt-4-turbo",
+    response = ai_client.chat_completion(
         messages=[
             {"role": "system", "content": system_message},
             {"role": "user", "content": content}
@@ -822,7 +817,7 @@ Return only the query without any explanation. Be precise with table and column 
     
     return {
         "type": "bot",
-        "content": response.choices[0].message.content,
+        "content": response,
         "timestamp": datetime.now().isoformat()
     }
 
