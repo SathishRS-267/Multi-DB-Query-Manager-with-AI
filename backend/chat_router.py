@@ -32,8 +32,8 @@ ai_client = get_ai_client()
 
 SMTP_SERVER = os.getenv("SMTP_SERVER", "smtp.gmail.com")
 SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
-SMTP_USERNAME = os.getenv("SMTP_USERNAME", "sqlwizard123@gmail.com")
-SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "eavt frhm iqxg pvnw")
+SMTP_USERNAME = os.getenv("SMTP_USERNAME", "")
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -45,11 +45,12 @@ router = APIRouter()
 # Initialize database for chat history
 MGMT_DB_HOST = os.getenv("MGMT_DB_HOST", "localhost")
 MGMT_DB_PORT = os.getenv("MGMT_DB_PORT", "5432")
-MGMT_DB_NAME = os.getenv("MGMT_DB_NAME", "sqleditor")
+MGMT_DB_NAME = os.getenv("MGMT_DB_NAME", "multi-db-query-manager")
 MGMT_DB_USER = os.getenv("MGMT_DB_USER", "postgres")
-MGMT_DB_PASSWORD = os.getenv("MGMT_DB_PASSWORD", "pwd")
+MGMT_DB_PASSWORD = os.getenv("MGMT_DB_PASSWORD", "")
 
 SQLALCHEMY_DATABASE_URL = f"postgresql://{MGMT_DB_USER}:{MGMT_DB_PASSWORD}@{MGMT_DB_HOST}:{MGMT_DB_PORT}/{MGMT_DB_NAME}"
+
 try:
     engine = create_engine(SQLALCHEMY_DATABASE_URL, pool_pre_ping=True)
     SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

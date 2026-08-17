@@ -37,14 +37,14 @@ class ConnectionResponse(BaseModel):
     password: str
     lastAccessed: str
 
-# Connection to our management database (sqleditor)
+# Connection to our management database (multi-db-query-manager)
 def get_management_db_connection():
     """Get connection to the management database"""
     try:
         conn = psycopg2.connect(
             host=os.getenv("MGMT_DB_HOST", "localhost"),
             port=int(os.getenv("MGMT_DB_PORT", "5432")),
-            database=os.getenv("MGMT_DB_NAME", "sqleditor"),
+            database=os.getenv("MGMT_DB_NAME", "multi-db-query-manager"),
             user=os.getenv("MGMT_DB_USER", "postgres"),
             password=os.getenv("MGMT_DB_PASSWORD")
         )

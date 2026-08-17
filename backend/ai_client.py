@@ -8,16 +8,16 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Configure NVIDIA API (OpenAI-compatible)
-NVIDIA_API_KEY = os.getenv("NVIDIA_API_KEY")
+# Configure AI Client using OPENAI_API_KEY
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 class AIClient:
-    """AI client using NVIDIA API (free)"""
+    """AI client wrapper"""
     
     def __init__(self):
         self.client = OpenAI(
             base_url="https://integrate.api.nvidia.com/v1",
-            api_key=NVIDIA_API_KEY
+            api_key=OPENAI_API_KEY
         )
         # Using Llama 3.1 70B - excellent free model
         self.model_id = 'meta/llama-3.1-70b-instruct'

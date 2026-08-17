@@ -75,7 +75,7 @@ def get_last_connection():
         conn = psycopg2.connect(
             host=os.getenv("MGMT_DB_HOST", "localhost"),
             port=int(os.getenv("MGMT_DB_PORT", "5432")),
-            database=os.getenv("MGMT_DB_NAME", "sqleditor"),
+            database=os.getenv("MGMT_DB_NAME", "multi-db-query-manager"),
             user=os.getenv("MGMT_DB_USER", "postgres"),
             password=os.getenv("MGMT_DB_PASSWORD")
         )
@@ -663,7 +663,7 @@ def save_query(data: SaveQuery):
         conn = psycopg2.connect(
             host=os.getenv("MGMT_DB_HOST", "localhost"),
             port=int(os.getenv("MGMT_DB_PORT", "5432")),
-            database=os.getenv("MGMT_DB_NAME", "sqleditor"),
+            database=os.getenv("MGMT_DB_NAME", "multi-db-query-manager"),
             user=os.getenv("MGMT_DB_USER", "postgres"),
             password=os.getenv("MGMT_DB_PASSWORD")
         )
@@ -718,7 +718,7 @@ def get_saved_queries():
         conn = psycopg2.connect(
             host=os.getenv("MGMT_DB_HOST", "localhost"),
             port=int(os.getenv("MGMT_DB_PORT", "5432")),
-            database=os.getenv("MGMT_DB_NAME", "sqleditor"),
+            database=os.getenv("MGMT_DB_NAME", "multi-db-query-manager"),
             user=os.getenv("MGMT_DB_USER", "postgres"),
             password=os.getenv("MGMT_DB_PASSWORD")
         )
@@ -806,7 +806,7 @@ def delete_query(query_id: int):
         conn = psycopg2.connect(
             host=os.getenv("MGMT_DB_HOST", "localhost"),
             port=int(os.getenv("MGMT_DB_PORT", "5432")),
-            database=os.getenv("MGMT_DB_NAME", "sqleditor"),
+            database=os.getenv("MGMT_DB_NAME", "multi-db-query-manager"),
             user=os.getenv("MGMT_DB_USER", "postgres"),
             password=os.getenv("MGMT_DB_PASSWORD")
         )
